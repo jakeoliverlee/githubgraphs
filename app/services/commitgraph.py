@@ -103,7 +103,7 @@ def fetch_commit_count_per_day(owner, repo):
 
 def plot_commit_count(commit_count, filename, repo, file_format, theme):
     theme_settings = THEMES.get(theme, THEMES["dark"])  # Use dark theme as default
-    plt.rcdefaults()  # reset matplotlib settings to default.
+    plt.rcdefaults()  # Reset matplotlib settings to default.
     plt.style.use(theme_settings["style"])
 
     plt.figure(figsize=(12, 6))  # Create a new figure with specified width and height
