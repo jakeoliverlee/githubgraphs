@@ -6,6 +6,7 @@ import matplotlib.dates as mdates
 from scipy.interpolate import make_interp_spline, BSpline
 import numpy as np
 from scipy.interpolate import PchipInterpolator
+from flask import jsonify
 
 THEMES = {
     "dark": {
@@ -66,8 +67,30 @@ THEMES = {
     },
 }
 
+TYPES = ["png", "svg"]
+
+
+class RepoNotFoundError(Exception):
+    pass
+
+
+class NoCommitsFoundError(Exception):
+    pass
+
+
+class InvalidUsername(Exception):
+    """Exception raised when provided username is not found by Github API."""
+
+    pass
+
 
 def fetch_commit_count_per_day(owner, repo):
+    response = requests.get(f"https://api.github.com/users/{owner}")
+    if response.status_code != 200:
+        raise InvalidUsername(f"Username does not exist on Github")
+    response = requests.get(f"https://api.github.com/repos/{owner}/{repo}")
+    if response.status_code != 200:
+        raise RepoNotFoundError(f"Repository {owner}/{repo} not found.")
     base_url = f"https://api.github.com/repos/{owner}/{repo}/commits"
     commit_count = defaultdict(int)
     page = 1
@@ -102,6 +125,10 @@ def fetch_commit_count_per_day(owner, repo):
 
 
 def plot_commit_count(commit_count, filename, repo, file_format, theme):
+    if not commit_count:
+        raise NoCommitsFoundError(
+            "No commits were found for this repository in the past month."
+        )
     theme_settings = THEMES.get(theme, THEMES["dark"])  # Use dark theme as default
     plt.rcdefaults()  # Reset matplotlib settings to default.
     plt.style.use(theme_settings["style"])
