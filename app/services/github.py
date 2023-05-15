@@ -65,6 +65,8 @@ def plot_commit_count(commit_count):
     # Plot the smooth curve
     plt.plot(t, smooth_counts, color="dodgerblue")
 
+    plt.plot(date_nums, counts, marker="o", linestyle="", color="dodgerblue")
+
     # Fill the area below the curve with blue color
     plt.fill_between(t, smooth_counts, color="dodgerblue", alpha=0.2)
 
@@ -74,9 +76,9 @@ def plot_commit_count(commit_count):
         mdates.DayLocator(interval=3)
     )  # Set x-axis ticks to one every three days
 
-    plt.xlabel("Day of the Month", color="white")
+    plt.xlabel("Days", color="white")
     plt.ylabel("Commit Count", color="white")
-    plt.title("Commit Count per Day (Past Month)", color="white")
+    plt.title(f"Commit Count for {repo}", color="white")
     plt.xticks(rotation=45, color="white")
     plt.yticks(color="white")
 
