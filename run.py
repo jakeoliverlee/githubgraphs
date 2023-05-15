@@ -1,10 +1,10 @@
-# run.py
 from flask import Flask
-from app.api.routes import api as api_blueprint
-from app import config
+from app.api.routes import api
 
 app = Flask(__name__)
-app.register_blueprint(api_blueprint, url_prefix="/api")
+
+# Register the api Blueprint
+app.register_blueprint(api)
 
 if __name__ == "__main__":
     app.run(debug=True)
