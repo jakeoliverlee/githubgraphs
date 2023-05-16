@@ -7,6 +7,7 @@ from scipy.interpolate import make_interp_spline, BSpline
 import numpy as np
 from scipy.interpolate import PchipInterpolator
 from flask import jsonify
+from collections import OrderedDict
 
 THEMES = {
     "dark": {
@@ -67,8 +68,6 @@ THEMES = {
     },
 }
 
-TYPES = ["png", "svg"]
-
 
 class RepoNotFoundError(Exception):
     pass
@@ -92,18 +91,25 @@ def fetch_commit_count_per_day(owner, repo):
     if response.status_code != 200:
         raise RepoNotFoundError(f"Repository {owner}/{repo} not found.")
     base_url = f"https://api.github.com/repos/{owner}/{repo}/commits"
-    commit_count = defaultdict(int)
+
+    # Initialize commit_count with zero counts for every day in the past month
+    end_date = datetime.now().date()
+    start_date = end_date - timedelta(days=30)
+    commit_count = OrderedDict(
+        (start_date + timedelta(days=i), 0)
+        for i in range((end_date - start_date).days + 1)
+    )
+
     page = 1
     per_page = 100
-    end_date = datetime.now()
 
     while True:
         params = {
             "page": page,
             "per_page": per_page,
             "since": (
-                end_date - timedelta(days=30)
-            ).isoformat(),  # Limit to the past month
+                start_date  # use start_date instead of end_date - 30 days
+            ).isoformat(),
         }
         response = requests.get(base_url, params=params)
         commits = response.json()
@@ -124,7 +130,7 @@ def fetch_commit_count_per_day(owner, repo):
     return commit_count
 
 
-def plot_commit_count(commit_count, filename, repo, file_format, theme):
+def plot_commit_count(commit_count, file_object, repo, theme):
     if not commit_count:
         raise NoCommitsFoundError(
             "No commits were found for this repository in the past month."
@@ -141,12 +147,9 @@ def plot_commit_count(commit_count, filename, repo, file_format, theme):
     # Convert dates to numbers for interpolation
     date_nums = mdates.date2num(dates)
 
-    # Perform PCHIP interpolation
-    t = np.linspace(
-        date_nums.min() - 1, date_nums.max() + 1, 300
-    )  # Extend the range of t
-    pchip = PchipInterpolator(date_nums, counts)
-    smooth_counts = pchip(t)
+    # Perform linear interpolation
+    t = np.linspace(date_nums.min(), date_nums.max(), 300)  # Define the range of t
+    smooth_counts = np.interp(t, date_nums, counts)
 
     # Plot the smooth curve
     plt.plot(t, smooth_counts, color=theme_settings["line_color"])
@@ -173,10 +176,11 @@ def plot_commit_count(commit_count, filename, repo, file_format, theme):
     plt.ylabel("Commit Count", color=theme_settings["label_color"])
     plt.title(f"Commit Count for {repo}", color=theme_settings["label_color"])
     plt.xticks(rotation=45, color=theme_settings["tick_color"])
-    plt.yticks(color=theme_settings["tick_color"])
+    plt.yticks(
+        range(max(counts) + 1), color=theme_settings["tick_color"]
+    )  # Only show integer ticks on y-axis
 
     # Save the plot to a file
-    plt.savefig(filename, format=file_format, dpi=1200)
-
+    plt.savefig(file_object, format="svg", dpi=1200)
     # Clear the current figure to ensure that the next plot does not inherit the settings of the previous plot
     plt.clf()
