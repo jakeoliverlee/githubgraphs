@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from scipy.interpolate import make_interp_spline, BSpline
+from matplotlib.dates import MonthLocator, YearLocator
+from matplotlib.ticker import MaxNLocator, MultipleLocator
 import numpy as np
-from scipy.interpolate import PchipInterpolator
 from flask import jsonify
 from collections import OrderedDict
 
@@ -68,6 +68,13 @@ THEMES = {
     },
 }
 
+PERIODS = ["month", "year", "all"]
+PERIOD_DAYS = {
+    "month": 30,
+    "year": 365,
+    "all": None,
+}
+
 
 class RepoNotFoundError(Exception):
     pass
@@ -83,7 +90,10 @@ class InvalidUsername(Exception):
     pass
 
 
-def fetch_commit_count_per_day(owner, repo):
+from datetime import date, timedelta
+
+
+def fetch_commit_count_per_day(owner, repo, period):
     response = requests.get(f"https://api.github.com/users/{owner}")
     if response.status_code != 200:
         raise InvalidUsername(f"Username does not exist on Github")
@@ -92,25 +102,25 @@ def fetch_commit_count_per_day(owner, repo):
         raise RepoNotFoundError(f"Repository {owner}/{repo} not found.")
     base_url = f"https://api.github.com/repos/{owner}/{repo}/commits"
 
-    # Initialize commit_count with zero counts for every day in the past month
+    # Initialize commit_count with zero counts for every day in the past 'period'
     end_date = datetime.now().date()
-    start_date = end_date - timedelta(days=30)
-    commit_count = OrderedDict(
-        (start_date + timedelta(days=i), 0)
-        for i in range((end_date - start_date).days + 1)
-    )
+    days = PERIOD_DAYS.get(period)
+    start_date = end_date - timedelta(days=days) if days else None
+    commit_count = OrderedDict()
+
+    # Initialize the commit count for every date in the period to zero
+    if start_date is not None:
+        for day_number in range(days):
+            day = start_date + timedelta(days=day_number)
+            commit_count[day] = 0
 
     page = 1
     per_page = 100
 
     while True:
-        params = {
-            "page": page,
-            "per_page": per_page,
-            "since": (
-                start_date  # use start_date instead of end_date - 30 days
-            ).isoformat(),
-        }
+        params = {"page": page, "per_page": per_page}
+        if start_date is not None:
+            params["since"] = start_date.isoformat()
         response = requests.get(base_url, params=params)
         commits = response.json()
 
@@ -120,20 +130,35 @@ def fetch_commit_count_per_day(owner, repo):
         for commit in commits:
             date = commit["commit"]["committer"]["date"]
             date_obj = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ").date()
-            commit_count[date_obj] += 1
+            commit_count[date_obj] = commit_count.get(date_obj, 0) + 1
 
         if len(commits) < per_page:
             break
 
         page += 1
 
+    commit_count_monthly = OrderedDict()
+    if period in ["year", "all"]:
+        for date, count in commit_count.items():
+            month = date.replace(day=1)  # Get the first day of the month
+            if month not in commit_count_monthly:
+                commit_count_monthly[month] = count
+            else:
+                commit_count_monthly[month] += count
+        commit_count = (
+            commit_count_monthly  # Replace commit_count with the monthly counts
+        )
+
     return commit_count
 
 
-def plot_commit_count(commit_count, file_object, repo, theme):
+from matplotlib.ticker import MaxNLocator
+
+
+def plot_commit_count(commit_count, file_object, repo, theme, period):
     if not commit_count:
         raise NoCommitsFoundError(
-            "No commits were found for this repository in the past month."
+            "No commits were found for this repository in the specified time range."
         )
     theme_settings = THEMES.get(theme, THEMES["dark"])  # Use dark theme as default
     plt.rcdefaults()  # Reset matplotlib settings to default.
@@ -154,9 +179,14 @@ def plot_commit_count(commit_count, file_object, repo, theme):
     # Plot the smooth curve
     plt.plot(t, smooth_counts, color=theme_settings["line_color"])
 
-    plt.plot(
-        date_nums, counts, marker="o", linestyle="", color=theme_settings["line_color"]
-    )
+    # Include markers only when period is 'month'
+    if period == "month":
+        plt.plot(
+            date_nums,
+            counts,
+            linestyle="",
+            color=theme_settings["line_color"],
+        )
 
     # Fill the area below the curve with the chosen color
     plt.fill_between(
@@ -166,19 +196,39 @@ def plot_commit_count(commit_count, file_object, repo, theme):
         alpha=theme_settings["fill_alpha"],
     )
 
-    # Configure the x-axis
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%d"))
-    plt.gca().xaxis.set_major_locator(
-        mdates.DayLocator(interval=3)
-    )  # Set x-axis ticks to one every three days
+    date_range = max(dates) - min(dates)
 
-    plt.xlabel("Days", color=theme_settings["label_color"])
+    # Configure the x-axis
+    if period == "all":
+        if date_range > timedelta(days=365):
+            plt.gca().xaxis.set_major_locator(YearLocator())
+            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+        else:
+            plt.gca().xaxis.set_major_locator(MonthLocator())
+            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+    elif period == "year":
+        plt.gca().xaxis.set_major_locator(MonthLocator())
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+    else:
+        plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=3))
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%d"))
+
+    plt.xlabel("Time", color=theme_settings["label_color"])
     plt.ylabel("Commit Count", color=theme_settings["label_color"])
     plt.title(f"Commit Count for {repo}", color=theme_settings["label_color"])
-    plt.xticks(rotation=45, color=theme_settings["tick_color"])
-    plt.yticks(
-        range(max(counts) + 1), color=theme_settings["tick_color"]
-    )  # Only show integer ticks on y-axis
+    plt.xticks(rotation=45, ha="right", color=theme_settings["tick_color"])
+
+    # Set y-axis intervals to 10 commits when period is 'year' or 'all'
+    if period in ["year", "all"]:
+        plt.gca().yaxis.set_major_locator(MultipleLocator(10))
+    else:
+        plt.gca().yaxis.set_major_locator(MultipleLocator(1))
+    plt.yticks(color=theme_settings["tick_color"])
+
+    # Set the y-limit to start from 0
+    plt.ylim(bottom=0)
+
+    plt.tight_layout()  # Automatically adjust subplot parameters to give specified padding.
 
     # Save the plot to a file
     plt.savefig(file_object, format="svg", dpi=1200)
