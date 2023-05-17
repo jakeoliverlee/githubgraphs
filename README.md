@@ -9,12 +9,12 @@
 | Badge                                                                                                                  | URL                                                                         | Theme                                                                                          |
 | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | <img width='' src="/assets/dark.svg"/> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `Default (dark)` |
-| <img width='' src="https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=jakeoliverlee&repo=jakeoliverlee.com&theme=light" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `light` |
-| <img width='' src="https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=jakeoliverlee&repo=jakeoliverlee.com&theme=sunset" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `sunset` |
-| <img width='' src="https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=jakeoliverlee&repo=jakeoliverlee.com&theme=forest" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `forest` |
-| <img width='' src="https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=jakeoliverlee&repo=jakeoliverlee.com&theme=ocean" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `ocean` |
-| <img width='' src="https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=jakeoliverlee&repo=jakeoliverlee.com&theme=sakura" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `sakura` |
-| <img width='' src="https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=jakeoliverlee&repo=jakeoliverlee.com&theme=monochrome" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `monochrome` |
+| <img width='' src="/assets/light.svg" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `light` |
+| <img width='' src="/assets/sunset.svg" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `sunset` |
+| <img width='' src="/assets/forest.svg" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `forest` |
+| <img width='' src="/assets/ocean.svg" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `ocean` |
+| <img width='' src="/assets/sakura.svg" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `sakura` |
+| <img width='' src="/assets/monochrome.svg" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username={username}&repo={repo}&theme={theme}` | `monochrome` |
 
 
 
