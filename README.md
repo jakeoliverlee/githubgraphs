@@ -3,7 +3,7 @@
 
 
 - Required: `username`, `repo`
-- Optional: `type`
+- Optional: `period`
 - Themes: `Default (dark)`, `light`, `sunset`, `forest`, `ocean`, `sakura`, `monochrome`
 
 | Badge                                                                                                                  | URL                                                                         | Theme                                                                                          |
