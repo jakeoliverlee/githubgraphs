@@ -6,6 +6,7 @@ from app.services.commitgraph import (
     NoCommitsFoundError,
     InvalidUsername,
     THEMES,
+    PERIODS,
 )
 from io import BytesIO
 
@@ -16,6 +17,7 @@ app = Flask(__name__)
 def get_commit_graph():
     username = request.args.get("username", default=None, type=str)
     repo = request.args.get("repo", default=None, type=str)
+    period = request.args.get("period", default="month", type=str)
     theme = request.args.get("theme", default=None, type=str)
     if username:
         try:
@@ -37,10 +39,21 @@ def get_commit_graph():
                     ),
                     400,
                 )
+            if period and period not in PERIODS:
+                periods = [i for i in PERIODS]
+                return (
+                    jsonify(
+                        {
+                            "message": f"invalid period, please choose from the available periods : {periods}",
+                            "status_code": 400,
+                        }
+                    ),
+                    400,
+                )
 
-            commit_count = fetch_commit_count_per_day(username, repo)
+            commit_count = fetch_commit_count_per_day(username, repo, period)
             img_io = BytesIO()
-            plot_commit_count(commit_count, img_io, repo, theme)
+            plot_commit_count(commit_count, img_io, repo, theme, period)
             img_io.seek(0)
 
             return send_file(img_io, mimetype="image/svg+xml")
