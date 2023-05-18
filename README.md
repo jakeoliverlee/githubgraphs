@@ -11,7 +11,7 @@ All API requests should be made to: `https://jakeoliverlee-githubgraphs.nw.r.app
 
 ### `GET /v1/commit-graph`
 
-This endpoint generates and returns an SVG graph of commit counts for the specified GitHub repository.
+This endpoint generates and returns an SVG graph of commit counts for your specified GitHub repository.
 
 
 #### Request parameters
