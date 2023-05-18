@@ -11,17 +11,17 @@ All API requests should be made to: `https://jakeoliverlee-githubgraphs.nw.r.app
 
 ### `GET /v1/commit-graph`
 
-This endpoint generates and returns an SVG graph of commit counts for the specified GitHub repository.
+This endpoint generates and returns an SVG graph of commit counts for your specified GitHub repository.
 
 
 #### Request parameters
 
 | Parameter | Description | Type | Default |
 | --- | --- | --- | --- |
-| username | The username of the repo owner | String | None |
-| repo | The name of the repo | String | None |
-| period | The period to analyze the commits. Possible values are "month", "year", "all" | String | "month" |
-| theme | The theme for the graph. Possible values are "dark", "light", "sunset", "forest", "ocean", "sakura", "monochrome" | String | dark |
+| username | The username of the repo owner | str | None |
+| repo | The name of the repo | str | None |
+| period | The period to analyze the commits. Possible values are "month", "year", "all" | str | "month" |
+| theme | The theme for the graph. Possible values are "dark", "light", "sunset", "forest", "ocean", "sakura", "monochrome" | str | dark |
 
 #### Responses
 
