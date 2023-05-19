@@ -1,24 +1,23 @@
-name: CI/CD for Github Graph's!
+name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Python
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
 
-    - name: Install dependencies
+    - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
@@ -28,13 +27,13 @@ jobs:
         cd tests
         python test_commitgraph.py
 
-    - name: Setup Google Cloud SDK
-      uses: google-github-actions/setup-gcloud@master
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0
       with:
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
         project_id: jakeoliverlee-githubgraphs
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
         export_default_credentials: true
 
-    - name: Deploy to Google App Engine
+    - name: Deploy to App Engine
       run: |
-        gcloud app deploy --quiet
+        gcloud app deploy
