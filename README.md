@@ -1,4 +1,5 @@
-# githubgraph's API Documentation
+![image](https://github.com/jakeoliverlee/githubgraphs/assets/22305022/d013b870-e37b-45bc-bb09-f0a069057e98)
+## Getting started
 
 
 This API provides a function for getting a commit graph for a particular GitHub repository.
