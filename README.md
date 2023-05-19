@@ -53,6 +53,7 @@ This endpoint generates and returns an SVG graph of commit counts for your speci
 | <img width='' src="/assets/ocean.svg" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=jakeoliverlee&repo=jakeoliverlee.com&theme=ocean` | `ocean` |
 | <img width='' src="/assets/sakura.svg" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=jakeoliverlee&repo=jakeoliverlee.com&theme=sakura` | `sakura` |
 | <img width='' src="/assets/monochrome.svg" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=jakeoliverlee&repo=jakeoliverlee.com&theme=monochrome` | `monochrome` |
+| <img width='' src="/assets/rainbow.svg" /> | `https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=jakeoliverlee&repo=jakeoliverlee.com&theme=rainbow` | `rainbow` |
 
 
 
