@@ -8,6 +8,8 @@ from matplotlib.ticker import MaxNLocator, MultipleLocator
 import numpy as np
 from flask import jsonify
 from collections import OrderedDict
+import matplotlib.cm as cm
+
 
 THEMES = {
     "dark": {
@@ -62,6 +64,13 @@ THEMES = {
         "style": "seaborn-whitegrid",
         "line_color": "black",
         "fill_color": "gray",
+        "fill_alpha": 0.2,
+        "label_color": "black",
+        "tick_color": "black",
+    },
+    "rainbow": {
+        "style": "seaborn-whitegrid",
+        "colormap": cm.get_cmap("rainbow"),  # Using rainbow colormap
         "fill_alpha": 0.2,
         "label_color": "black",
         "tick_color": "black",
@@ -160,6 +169,7 @@ def plot_commit_count(commit_count, file_object, repo, theme, period):
         raise NoCommitsFoundError(
             "No commits were found for this repository in the specified time range."
         )
+
     theme_settings = THEMES.get(theme, THEMES["dark"])  # Use dark theme as default
     plt.rcdefaults()  # Reset matplotlib settings to default.
     plt.style.use(theme_settings["style"])
@@ -176,25 +186,41 @@ def plot_commit_count(commit_count, file_object, repo, theme, period):
     t = np.linspace(date_nums.min(), date_nums.max(), 300)  # Define the range of t
     smooth_counts = np.interp(t, date_nums, counts)
 
-    # Plot the smooth curve
-    plt.plot(t, smooth_counts, color=theme_settings["line_color"])
+    # Get the colormap from the theme
+    colormap = theme_settings.get("colormap", None)
 
-    # Include markers only when period is 'month'
-    if period == "month":
-        plt.plot(
-            date_nums,
-            counts,
-            linestyle="",
-            color=theme_settings["line_color"],
+    if colormap is not None:
+        # Loop over each segment of the line
+        for i in range(1, len(t)):
+            # Calculate the color for this segment
+            color = colormap(i / len(t))
+
+            # Plot the line segment
+            plt.plot(t[i - 1 : i + 1], smooth_counts[i - 1 : i + 1], color=color)
+
+            # Fill the area below the line segment
+            plt.fill_between(
+                t[i - 1 : i + 1],
+                smooth_counts[i - 1 : i + 1],
+                color=color,
+                alpha=theme_settings["fill_alpha"],
+            )
+    else:
+        # Original code for plotting the line and filling the area under the line
+        plt.plot(t, smooth_counts, color=theme_settings["line_color"])
+        if period == "month":
+            plt.plot(
+                date_nums,
+                counts,
+                linestyle="",
+                color=theme_settings["line_color"],
+            )
+        plt.fill_between(
+            t,
+            smooth_counts,
+            color=theme_settings["fill_color"],
+            alpha=theme_settings["fill_alpha"],
         )
-
-    # Fill the area below the curve with the chosen color
-    plt.fill_between(
-        t,
-        smooth_counts,
-        color=theme_settings["fill_color"],
-        alpha=theme_settings["fill_alpha"],
-    )
 
     date_range = max(dates) - min(dates)
 
