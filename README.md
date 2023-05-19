@@ -21,7 +21,7 @@ This endpoint generates and returns an SVG graph of commit counts for your speci
 | username | The username of the repo owner | str | None |
 | repo | The name of the repo | str | None |
 | period | The period to analyze the commits. Possible values are "month", "year", "all" | str | "month" |
-| theme | The theme for the graph. Possible values are "dark", "light", "sunset", "forest", "ocean", "sakura", "monochrome" | str | dark |
+| theme | The theme for the graph. Possible values are "dark", "light", "sunset", "forest", "ocean", "sakura", "monochrome", "rainbow" | str | dark |
 
 #### Responses
 
