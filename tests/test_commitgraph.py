@@ -22,13 +22,13 @@ class TestCommitGraphAPI(unittest.TestCase):
         response = self.client.get("/v1/commit-graph")
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(data["detail"], "username&repo parameter is required")
+        self.assertEqual(data["detail"], "Missing query parameter 'username'")
 
     def test_no_repo(self):
         response = self.client.get("/v1/commit-graph?username=test")
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(data["detail"], "repo parameter is required")
+        self.assertEqual(data["detail"], "Missing query parameter 'repo'")
 
     def test_invalid_theme(self):
         response = self.client.get(
@@ -36,9 +36,7 @@ class TestCommitGraphAPI(unittest.TestCase):
         )
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn(
-            "invalid theme, please choose from the available themes", data["detail"]
-        )
+        self.assertIn("is not one of ['dark', 'light', 'sunset', 'forest', 'ocean', 'sakura', 'monochrome', 'rainbow']", data["detail"])
 
     def test_invalid_period(self):
         response = self.client.get(
@@ -46,13 +44,11 @@ class TestCommitGraphAPI(unittest.TestCase):
         )
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn(
-            "invalid period, please choose from the available periods", data["detail"]
-        )
+        self.assertIn("is not one of ['month', 'year', 'all']", data["detail"])
 
     @patch(
         "app.services.commitgraph.fetch_commit_count_per_day",
-        side_effect=RepoNotFoundError("repo not found"),
+        side_effect=RepoNotFoundError("Repository test/test not found."),
     )
     def test_repo_not_found(self, _):
         response = self.client.get("/v1/commit-graph?username=test&repo=test")
@@ -62,7 +58,7 @@ class TestCommitGraphAPI(unittest.TestCase):
 
     @patch(
         "app.services.commitgraph.fetch_commit_count_per_day",
-        side_effect=InvalidUsername("invalid username"),
+        side_effect=InvalidUsername("Username does not exist on Github"),
     )
     def test_invalid_username(self, _):
         response = self.client.get(
