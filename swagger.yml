@@ -1,0 +1,51 @@
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: "Github Graph's API"
+servers:
+- url: "https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1"
+paths:
+  /commit-graph:
+    get:
+      operationId: controller.get_commit_graph
+      summary: "Fetches the commit graph for a given Github user's repository."
+      description: "This operation fetches commit graph for a given Github user's repository."
+      parameters:
+        - name: "username"
+          in: "query"
+          description: "Username on Github."
+          required: true
+          schema:
+            type: "string"
+        - name: "repo"
+          in: "query"
+          description: "Github repository name."
+          required: true
+          schema:
+            type: "string"
+        - name: "period"
+          in: "query"
+          description: "The period to fetch commits from, available options: 'month', 'year', 'all'."
+          required: false
+          schema:
+            type: "string"
+            enum: ["month", "year", "all"]
+        - name: "theme"
+          in: "query"
+          description: "Colour theme of the commit graph"
+          required: false
+          schema:
+            type: "string"
+            enum: ["dark", "light", "sunset", "forest", "ocean", "sakura", "monochrome", "rainbow"]
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            image/svg+xml:
+              schema:
+                type: "string"
+                format: "binary"
+        '400':
+          description: "Invalid parameters supplied."
+        '404':
+          description: "User or repository not found."
