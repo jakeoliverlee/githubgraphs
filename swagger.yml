@@ -1,13 +1,18 @@
 openapi: "3.0.0"
 info:
   version: "1.0.0"
-  title: "Github Graph's API"
+  title: "Github Commit Graph API"
 servers:
 - url: "https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1"
+tags:
+- name: "commit graph"
+  description: "Operations related to the commit graph"
 paths:
   /commit-graph:
     get:
       operationId: controller.get_commit_graph
+      tags:
+        - "commit graph"
       summary: "Fetches the commit graph for a given Github user's repository."
       description: "This operation fetches commit graph for a given Github user's repository."
       parameters:
@@ -32,7 +37,7 @@ paths:
             enum: ["month", "year", "all"]
         - name: "theme"
           in: "query"
-          description: "Colour theme of the commit graph"
+          description: "Theme of the commit graph, available options: 'dark', 'light', 'sunset', 'forest', 'ocean', 'sakura', 'monochrome', 'rainbow'."
           required: false
           schema:
             type: "string"
