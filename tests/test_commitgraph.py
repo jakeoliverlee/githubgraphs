@@ -54,19 +54,19 @@ class TestCommitGraphAPI(unittest.TestCase):
         response = self.client.get("/v1/commit-graph?username=test&repo=test")
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(data["detail"], "Repository test/test not found.")
+        self.assertEqual(data["message"], "Repository test/test not found.")
 
     @patch(
-        "app.services.commitgraph.fetch_commit_count_per_day",
+        "app.services.commitgraph.check_valid_user_and_repo",
         side_effect=InvalidUsername("Username does not exist on Github"),
     )
     def test_invalid_username(self, mock_fetch):
         response = self.client.get(
-            "/v1/commit-graph?username=xvbfdfbvdfzbdbcvbdsfb&repo=test"
+            "https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/commit-graph?username=xvbfdfbvdfzbdbcvbdsfb&repo=test"
         )
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(data["detail"], "Username does not exist on Github")
+        self.assertEqual(data["message"], "Username does not exist on Github")
 
 
 if __name__ == "__main__":
