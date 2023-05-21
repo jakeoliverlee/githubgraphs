@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -98,25 +98,50 @@ class InvalidUsername(Exception):
 
     pass
 
-
-from datetime import date, timedelta
-
-
-def fetch_commit_count_per_day(owner, repo, period):
+def check_valid_user_and_repo(owner, repo):
     try:
         response = requests.get(f"https://api.github.com/users/{owner}")
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
         raise InvalidUsername(f"Username does not exist on Github") from err
-
     try:
         response = requests.get(f"https://api.github.com/repos/{owner}/{repo}")
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
         raise RepoNotFoundError(f"Repository {owner}/{repo} not found.") from err
+        
 
+def fetch_commits_from_api(base_url, page, per_page, start_date):
+    params = {"page": page, "per_page": per_page}
+    if start_date is not None:
+        params["since"] = start_date.isoformat()
+    response = requests.get(base_url, params=params)
+    return response.json()
+
+
+def count_commits_by_date(commits, commit_count):
+    for commit in commits:
+        date = commit["commit"]["committer"]["date"]
+        date_obj = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S%z").date()
+        commit_count[date_obj] = commit_count.get(date_obj, 0) + 1
+    return commit_count
+
+
+def aggregate_commits_by_month(commit_count, period):
+    commit_count_monthly = OrderedDict()
+    if period in ["year", "all"]:
+        for date, count in commit_count.items():
+            month = date.replace(day=1)  # Get the first day of the month
+            if month not in commit_count_monthly:
+                commit_count_monthly[month] = count
+            else:
+                commit_count_monthly[month] += count
+        commit_count = commit_count_monthly
+    return commit_count
+
+
+def fetch_commit_count_per_day(owner, repo, period):
     base_url = f"https://api.github.com/repos/{owner}/{repo}/commits"
-
 
     # Initialize commit_count with zero counts for every day in the past 'period'
     end_date = datetime.now().date()
@@ -134,102 +159,67 @@ def fetch_commit_count_per_day(owner, repo, period):
     per_page = 100
 
     while True:
-        params = {"page": page, "per_page": per_page}
-        if start_date is not None:
-            params["since"] = start_date.isoformat()
-        response = requests.get(base_url, params=params)
-        commits = response.json()
+        commits = fetch_commits_from_api(base_url, page, per_page, start_date)
 
         if not commits:
             break
 
-        for commit in commits:
-            date = commit["commit"]["committer"]["date"]
-            date_obj = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ").date()
-            commit_count[date_obj] = commit_count.get(date_obj, 0) + 1
+        commit_count = count_commits_by_date(commits, commit_count)
 
         if len(commits) < per_page:
             break
 
         page += 1
 
-    commit_count_monthly = OrderedDict()
-    if period in ["year", "all"]:
-        for date, count in commit_count.items():
-            month = date.replace(day=1)  # Get the first day of the month
-            if month not in commit_count_monthly:
-                commit_count_monthly[month] = count
-            else:
-                commit_count_monthly[month] += count
-        commit_count = (
-            commit_count_monthly  # Replace commit_count with the monthly counts
-        )
+    commit_count = aggregate_commits_by_month(commit_count, period)
 
     return commit_count
 
 
-
-def plot_commit_count(commit_count, file_object, repo, theme, period):
-    if not commit_count:
-        raise NoCommitsFoundError(
-            "No commits were found for this repository in the specified time range."
-        )
-
-    theme_settings = THEMES.get(theme, THEMES["dark"])  # Use dark theme as default
-    plt.rcdefaults()  # Reset matplotlib settings to default.
+def set_theme(theme):
+    theme_settings = THEMES.get(theme, THEMES["dark"])
+    plt.rcdefaults()
     plt.style.use(theme_settings["style"])
+    return theme_settings
 
-    plt.figure(figsize=(12, 6))  # Create a new figure with specified width and height
 
+def prepare_data_for_plotting(commit_count):
     dates = sorted(commit_count.keys())
     counts = [commit_count[date] for date in dates]
-
-    # Convert dates to numbers for interpolation
     date_nums = mdates.date2num(dates)
-
-    # Perform linear interpolation
-    t = np.linspace(date_nums.min(), date_nums.max(), 300)  # Define the range of t
+    t = np.linspace(date_nums.min(), date_nums.max(), 300)
     smooth_counts = np.interp(t, date_nums, counts)
+    return t, smooth_counts, date_nums, counts
 
-    # Get the colormap from the theme
+
+def plot_with_colormap(t, smooth_counts, theme_settings):
     colormap = theme_settings.get("colormap", None)
-
     if colormap is not None:
-        # Loop over each segment of the line
         for i in range(1, len(t)):
-            # Calculate the color for this segment
             color = colormap(i / len(t))
-
-            # Plot the line segment
             plt.plot(t[i - 1 : i + 1], smooth_counts[i - 1 : i + 1], color=color)
-
-            # Fill the area below the line segment
             plt.fill_between(
                 t[i - 1 : i + 1],
                 smooth_counts[i - 1 : i + 1],
                 color=color,
                 alpha=theme_settings["fill_alpha"],
             )
-    else:
-        # Original code for plotting the line and filling the area under the line
-        plt.plot(t, smooth_counts, color=theme_settings["line_color"])
-        if period == "month":
-            plt.plot(
-                date_nums,
-                counts,
-                linestyle="",
-                color=theme_settings["line_color"],
-            )
-        plt.fill_between(
-            t,
-            smooth_counts,
-            color=theme_settings["fill_color"],
-            alpha=theme_settings["fill_alpha"],
-        )
 
+
+def plot_without_colormap(t, smooth_counts, date_nums, counts, period, theme_settings):
+    plt.plot(t, smooth_counts, color=theme_settings["line_color"])
+    if period == "month":
+        plt.plot(date_nums, counts, linestyle="", color=theme_settings["line_color"])
+    plt.fill_between(
+        t,
+        smooth_counts,
+        color=theme_settings["fill_color"],
+        alpha=theme_settings["fill_alpha"],
+    )
+
+
+def configure_x_axis(dates, period, theme_settings):
     date_range = max(dates) - min(dates)
-
-    # Configure the x-axis
     if period == "all":
         if date_range > timedelta(days=365):
             plt.gca().xaxis.set_major_locator(YearLocator())
@@ -245,23 +235,50 @@ def plot_commit_count(commit_count, file_object, repo, theme, period):
         plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%d"))
 
     plt.xlabel("Time", color=theme_settings["label_color"])
-    plt.ylabel("Commit Count", color=theme_settings["label_color"])
-    plt.title(f"Commit Count for {repo}", color=theme_settings["label_color"])
-    plt.xticks(rotation=45, ha="right", color=theme_settings["tick_color"])
 
-    # Set y-axis intervals to 10 commits when period is 'year' or 'all'
+
+def configure_y_axis(period, theme_settings):
     if period in ["year", "all"]:
         plt.gca().yaxis.set_major_locator(MultipleLocator(10))
     else:
         plt.gca().yaxis.set_major_locator(MultipleLocator(1))
     plt.yticks(color=theme_settings["tick_color"])
-
-    # Set the y-limit to start from 0
     plt.ylim(bottom=0)
+    plt.ylabel("Commit Count", color=theme_settings["label_color"])
 
-    plt.tight_layout()  # Automatically adjust subplot parameters to give specified padding.
 
-    # Save the plot to a file
+def set_labels_and_title(repo, theme_settings):
+    plt.title(f"Commit Count for {repo}", color=theme_settings["label_color"])
+    plt.xticks(rotation=45, ha="right", color=theme_settings["tick_color"])
+
+
+def save_plot(file_object):
+    plt.tight_layout()
     plt.savefig(file_object, format="svg", dpi=1200)
-    # Clear the current figure to ensure that the next plot does not inherit the settings of the previous plot
     plt.clf()
+
+
+def plot_commit_count(commit_count, file_object, repo, theme, period):
+    if not commit_count:
+        raise NoCommitsFoundError("No commits were found for this repository in the specified time range.")
+    
+    theme_settings = set_theme(theme)
+    plt.figure(figsize=(12, 6))
+
+    t, smooth_counts, date_nums, counts = prepare_data_for_plotting(commit_count)
+
+    if theme_settings.get("colormap", None) is not None:
+        plot_with_colormap(t, smooth_counts, theme_settings)
+    else:
+        plot_without_colormap(t, smooth_counts, date_nums, counts, period, theme_settings)
+
+    
+    configure_x_axis(sorted(commit_count.keys()), period, theme_settings)
+    configure_y_axis(period, theme_settings)
+    
+    set_labels_and_title(repo, theme_settings)
+    
+    save_plot(file_object)
+
+
+
