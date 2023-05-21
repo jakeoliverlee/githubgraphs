@@ -16,19 +16,19 @@ from app.services.commitgraph import (
 
 class TestCommitGraphAPI(unittest.TestCase):
     def setUp(self):
-        self.client = app.test_client()
+        self.client = app.app.test_client()
 
     def test_no_username_or_repo(self):
         response = self.client.get("/v1/commit-graph")
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(data["message"], "username&repo parameter is required")
+        self.assertEqual(data["detail"], "username&repo parameter is required")
 
     def test_no_repo(self):
         response = self.client.get("/v1/commit-graph?username=test")
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(data["message"], "repo parameter is required")
+        self.assertEqual(data["detail"], "repo parameter is required")
 
     def test_invalid_theme(self):
         response = self.client.get(
@@ -37,7 +37,7 @@ class TestCommitGraphAPI(unittest.TestCase):
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertIn(
-            "invalid theme, please choose from the available themes", data["message"]
+            "invalid theme, please choose from the available themes", data["detail"]
         )
 
     def test_invalid_period(self):
@@ -47,7 +47,7 @@ class TestCommitGraphAPI(unittest.TestCase):
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertIn(
-            "invalid period, please choose from the available periods", data["message"]
+            "invalid period, please choose from the available periods", data["detail"]
         )
 
     @patch(
@@ -58,7 +58,7 @@ class TestCommitGraphAPI(unittest.TestCase):
         response = self.client.get("/v1/commit-graph?username=test&repo=test")
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(data["message"], "Repository test/test not found.")
+        self.assertEqual(data["detail"], "Repository test/test not found.")
 
     @patch(
         "app.services.commitgraph.fetch_commit_count_per_day",
@@ -70,7 +70,7 @@ class TestCommitGraphAPI(unittest.TestCase):
         )
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(data["message"], "Username does not exist on Github")
+        self.assertEqual(data["detail"], "Username does not exist on Github")
 
 
 if __name__ == "__main__":
