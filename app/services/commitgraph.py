@@ -103,13 +103,20 @@ from datetime import date, timedelta
 
 
 def fetch_commit_count_per_day(owner, repo, period):
-    response = requests.get(f"https://api.github.com/users/{owner}")
-    if response.status_code != 200:
-        raise InvalidUsername(f"Username does not exist on Github")
-    response = requests.get(f"https://api.github.com/repos/{owner}/{repo}")
-    if response.status_code != 200:
-        raise RepoNotFoundError(f"Repository {owner}/{repo} not found.")
+    try:
+        response = requests.get(f"https://api.github.com/users/{owner}")
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        raise InvalidUsername(f"Username does not exist on Github") from err
+
+    try:
+        response = requests.get(f"https://api.github.com/repos/{owner}/{repo}")
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as err:
+        raise RepoNotFoundError(f"Repository {owner}/{repo} not found.") from err
+
     base_url = f"https://api.github.com/repos/{owner}/{repo}/commits"
+
 
     # Initialize commit_count with zero counts for every day in the past 'period'
     end_date = datetime.now().date()
@@ -160,8 +167,6 @@ def fetch_commit_count_per_day(owner, repo, period):
 
     return commit_count
 
-
-from matplotlib.ticker import MaxNLocator
 
 
 def plot_commit_count(commit_count, file_object, repo, theme, period):
