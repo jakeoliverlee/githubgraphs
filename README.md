@@ -4,6 +4,8 @@
 
 This API provides a function for getting a commit graph for a particular GitHub repository.
 
+Try out Swagger UI interactive documentation: https://jakeoliverlee-githubgraphs.nw.r.appspot.com/v1/ui/#/commit%20graph/controller.get_commit_graph
+
 ## Base URL
 
 All API requests should be made to: `https://jakeoliverlee-githubgraphs.nw.r.appspot.com`
