@@ -141,7 +141,7 @@ def fetch_commits_from_api(base_url, page, per_page, start_date):
     if start_date is not None:
         params["since"] = start_date.isoformat()
     response = requests.get(base_url, params=params)
-    return response.json()
+    return response.json(), response.headers.get('Link')
 
 
 def count_commits_by_date(commits, commit_count):
@@ -187,16 +187,23 @@ def fetch_commit_count_per_day(owner, repo, period):
     per_page = 100
 
     while True:
-        commits = fetch_commits_from_api(base_url, page, per_page, start_date)
+        commits, next_page_link = fetch_commits_from_api(base_url, page, per_page, start_date)
 
         if not commits:
             break
 
         commit_count = count_commits_by_date(commits, commit_count)
 
-        if len(commits) < per_page:
+        # if the period is 'week' or 'year', we stop fetching commits as soon as we reach the period.
+        last_commit_date_str = commits[-1]["commit"]["committer"]["date"]
+        last_commit_date = datetime.strptime(last_commit_date_str, "%Y-%m-%dT%H:%M:%S%z").date()
+        if start_date and last_commit_date < start_date:
             break
 
+        # if the next page doesn't exist, we stop fetching commits
+        if next_page_link is None:
+            break
+        
         page += 1
 
     commit_count = aggregate_commits_by_month(commit_count, period)
