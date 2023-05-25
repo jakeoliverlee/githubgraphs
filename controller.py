@@ -9,6 +9,10 @@ from app.services.commitgraph import (
     PERIODS,
 )
 from io import BytesIO
+import logging
+from datetime import datetime
+
+
 
 def get_commit_graph():
     username = request.args.get("username", default=None, type=str)
@@ -47,7 +51,9 @@ def get_commit_graph():
                     400,
                 )
 
+        
             commit_count = fetch_commit_count_per_day(username, repo, period)
+
             img_io = BytesIO()
             plot_commit_count(commit_count, img_io, repo, theme, period)
             img_io.seek(0)

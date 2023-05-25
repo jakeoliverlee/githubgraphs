@@ -9,7 +9,9 @@ import numpy as np
 from flask import jsonify
 from collections import OrderedDict
 import matplotlib.cm as cm
+from firebase_admin import firestore
 
+db = firestore.Client()
 
 THEMES = {
     "dark": {
@@ -98,18 +100,41 @@ class InvalidUsername(Exception):
 
     pass
 
+
 def check_valid_user_and_repo(owner, repo):
-    try:
-        response = requests.get(f"https://api.github.com/users/{owner}")
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as err:
-        raise InvalidUsername(f"Username does not exist on Github") from err
-    try:
-        response = requests.get(f"https://api.github.com/repos/{owner}/{repo}")
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as err:
-        raise RepoNotFoundError(f"Repository {owner}/{repo} not found.") from err
+    cache_key = f"{owner}_{repo}"
+    
+    # Attempt to fetch data from the cache
+    doc_ref = db.collection('cache').document(cache_key)
+    doc = doc_ref.get()
+
+    if doc.exists:
+        print(f"Cache hit for owner={owner}, repo={repo}")
+        user_and_repo_info = doc.to_dict()
+    else:
+        print(f"No cache found for owner={owner}, repo={repo}. Making API call.")
         
+        # Perform your API calls and processing here...
+        response_user = requests.get(f"https://api.github.com/users/{owner}")
+        response_repo = requests.get(f"https://api.github.com/repos/{owner}/{repo}")
+        
+        # If both requests are successful, we assume the user and repo are valid
+        if response_user.status_code == 200 and response_repo.status_code == 200:
+            user_and_repo_info = {
+                "owner": owner,
+                "repo": repo
+            }
+            # Store the result of your API call in cache
+            doc_ref.set(user_and_repo_info)
+        else:
+            print(f"Invalid owner={owner} or repo={repo}.")
+            user_and_repo_info = None
+
+    return user_and_repo_info
+
+
+
+
 
 def fetch_commits_from_api(base_url, page, per_page, start_date):
     params = {"page": page, "per_page": per_page}
@@ -141,7 +166,9 @@ def aggregate_commits_by_month(commit_count, period):
 
 
 def fetch_commit_count_per_day(owner, repo, period):
-    check_valid_user_and_repo(owner, repo)
+    if check_valid_user_and_repo(owner, repo) is None:
+        print("Invalid owner or repo, aborting.")
+        return None
     base_url = f"https://api.github.com/repos/{owner}/{repo}/commits"
 
     # Initialize commit_count with zero counts for every day in the past 'period'
