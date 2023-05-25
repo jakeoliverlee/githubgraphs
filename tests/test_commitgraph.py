@@ -56,6 +56,7 @@ class TestCommitGraphAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(data["message"], "Repository test/test not found.")
 
+
     @patch(
         "app.services.commitgraph.check_valid_user_and_repo",
         side_effect=InvalidUsername("Username does not exist on Github"),

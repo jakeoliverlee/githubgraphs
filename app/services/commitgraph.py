@@ -167,8 +167,8 @@ def aggregate_commits_by_month(commit_count, period):
 
 def fetch_commit_count_per_day(owner, repo, period):
     if check_valid_user_and_repo(owner, repo) is None:
-        print("Invalid owner or repo, aborting.")
-        return None
+        raise RepoNotFoundError(f"Repository {owner}/{repo} not found.")
+    
     base_url = f"https://api.github.com/repos/{owner}/{repo}/commits"
 
     # Initialize commit_count with zero counts for every day in the past 'period'
