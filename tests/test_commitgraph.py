@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import unittest
 from unittest.mock import patch
 from flask import json
-from main import app
+from main import connexion_app
 from app.services.commitgraph import (
     RepoNotFoundError,
     NoCommitsFoundError,
@@ -16,7 +16,7 @@ from app.services.commitgraph import (
 
 class TestCommitGraphAPI(unittest.TestCase):
     def setUp(self):
-        self.client = app.app.test_client()
+        self.client = connexion_app.app.test_client()
 
     def test_no_username_or_repo(self):
         response = self.client.get("/v1/commit-graph")
