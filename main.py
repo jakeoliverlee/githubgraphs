@@ -3,9 +3,11 @@ from flask import Flask
 import connexion
 import controller
 from werkzeug.middleware.profiler import ProfilerMiddleware
+from flask_cors import CORS
 
 
 app = connexion.App(__name__, specification_dir="./")
+CORS(app)
 app_dir = os.path.dirname(os.path.realpath(__file__))  # path to the directory of the script
 swagger_file = os.path.join(app_dir, "swagger.yml")  # path to swagger.yml
 app.add_api(swagger_file)
