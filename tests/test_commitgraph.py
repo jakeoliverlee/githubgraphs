@@ -69,6 +69,7 @@ class TestCommitGraphAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(data["message"], "Username does not exist on Github")
 
+# Test
 
 if __name__ == "__main__":
     unittest.main()
