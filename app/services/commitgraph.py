@@ -265,11 +265,15 @@ def configure_x_axis(dates, period, theme_settings):
     elif period == "year":
         plt.gca().xaxis.set_major_locator(MonthLocator())
         plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+        plt.xlabel("Months", color=theme_settings["label_color"])
     else:
         plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=3))
         plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%d"))
+        plt.xlabel("Days", color=theme_settings["label_color"])
 
-    plt.xlabel("Time", color=theme_settings["label_color"])
+
+    
+        
 
 
 def configure_y_axis(period, theme_settings):
