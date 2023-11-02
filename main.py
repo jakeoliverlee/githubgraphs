@@ -3,16 +3,23 @@ from flask import Flask
 import connexion
 import controller
 from werkzeug.middleware.profiler import ProfilerMiddleware
+from flask_cors import CORS
 
+# Initialize Connexion app
+connexion_app = connexion.App(__name__, specification_dir="./")
 
-app = connexion.App(__name__, specification_dir="./")
-app_dir = os.path.dirname(os.path.realpath(__file__))  # path to the directory of the script
-swagger_file = os.path.join(app_dir, "swagger.yml")  # path to swagger.yml
-app.add_api(swagger_file)
+# Get the underlying Flask app
+app = connexion_app.app
 
-profile_app = app.app
-profile_app.config['PROFILE'] = True
-profile_app.wsgi_app = ProfilerMiddleware(profile_app.wsgi_app, restrictions=[30])
+# Enable CORS
+CORS(app)
+
+# Specify the path to your swagger.yml file
+app_dir = os.path.dirname(os.path.realpath(__file__))
+swagger_file = os.path.join(app_dir, "swagger.yml")
+
+# Add the API to your Connexion app
+connexion_app.add_api(swagger_file)
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    connexion_app.run(port=5000, debug=True)
