@@ -10,7 +10,7 @@ from main import connexion_app
 from app.services.commitgraph import (
     RepoNotFoundError,
     NoCommitsFoundError,
-    InvalidUsername,
+    InvalidUsernameAndRepositoryCombination,
 )
 
 
@@ -36,7 +36,10 @@ class TestCommitGraphAPI(unittest.TestCase):
         )
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn("is not one of ['dark', 'light', 'sunset', 'forest', 'ocean', 'sakura', 'monochrome', 'rainbow']", data["detail"])
+        self.assertIn(
+            "is not one of ['dark', 'light', 'sunset', 'forest', 'ocean', 'sakura', 'monochrome', 'rainbow']",
+            data["detail"],
+        )
 
     def test_invalid_period(self):
         response = self.client.get(
@@ -56,10 +59,11 @@ class TestCommitGraphAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(data["message"], "Repository test/test not found.")
 
-
     @patch(
         "app.services.commitgraph.check_valid_user_and_repo",
-        side_effect=InvalidUsername("Username does not exist on Github"),
+        side_effect=InvalidUsernameAndRepositoryCombination(
+            "Username does not exist on Github"
+        ),
     )
     def test_invalid_username(self, mock_fetch):
         response = self.client.get(
@@ -69,7 +73,6 @@ class TestCommitGraphAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(data["message"], "Username does not exist on Github")
 
-# Test
 
 if __name__ == "__main__":
     unittest.main()
